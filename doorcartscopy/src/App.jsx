@@ -47,9 +47,9 @@ export default function App() {
         {/* Public Routes */}
         <Route
           path="/login"
-          element={
-            isAuthenticated ? <Navigate to="/home" replace /> : <Login />
-          }
+          // element={
+          //   isAuthenticated ? <Navigate to="/home" replace /> : <Login />
+          // }
         />
         <Route
           path="/register"
@@ -59,14 +59,14 @@ export default function App() {
         />
 
         {/* Protected Routes */}
-        <Route
+        {/* <Route
           path="/home"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <Home />
             </ProtectedRoute>
           }
-        />
+        /> */}
         <Route
           path="/product"
           element={
