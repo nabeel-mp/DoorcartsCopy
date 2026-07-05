@@ -1,26 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Menu, Search, User, History, Wallet, Settings, LogOut, X,
-  Layers, Grid3x3, Zap, HardHat,
+  Layers, Grid3x3, Zap, HardHat, Box,
 } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
-
-const CATEGORIES = [
-  { label: 'Cement', icon: Layers, path: '/product' },
-  { label: 'Steel & Rebars', icon: HardHat, path: '/product' },
-  { label: 'Bricks & Blocks', icon: Grid3x3, path: '/product' },
-  { label: 'Electricals', icon: Zap, path: '/product' },
-];
+import { useAuth } from '../context/AuthContext';
+import * as categoryService from '../api/categoryService';
 
 const SLIDES = [
   { title: '10% Off TMT Steel', subtitle: 'Bulk orders only', gradient: 'from-[#004aad] to-[#00296b]' },
   { title: 'Bulk Cement Deals', subtitle: 'Free site delivery', gradient: 'from-[#5d5f5f] to-[#2f3133]' },
 ];
 
+// The backend has no concept of a category icon, so we cycle through a
+// small fixed set of lucide icons by index purely for visual variety.
+const CATEGORY_ICONS = [Layers, HardHat, Grid3x3, Zap, Box];
+
 export default function Home() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const [categoryError, setCategoryError] = useState('');
+
+  // GET /api/categories
+  useEffect(() => {
+    let cancelled = false;
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryService.getCategories();
+        if (!cancelled) setCategories(data);
+      } catch (err) {
+        if (!cancelled) {
+          setCategoryError(err.response?.data?.message || 'Could not load categories.');
+        }
+      } finally {
+        if (!cancelled) setIsLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleLogout = async () => {
+    setDrawerOpen(false);
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <div className="relative w-full max-w-md mx-auto min-h-[100dvh] bg-[#f9f9fc] font-sans pb-24">
@@ -35,12 +63,11 @@ export default function Home() {
             <div className="px-6 mb-8 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-[#004aad] text-white flex items-center justify-center font-bold text-lg">
-                  BM
+                  {(user?.name || 'U').slice(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-[#004aad]">Build Master</h2>
-                  <p className="text-sm text-gray-500">Pro Member</p>
-                  <p className="text-[10px] text-gray-400">ID: 88291</p>
+                  <h2 className="text-lg font-bold text-[#004aad]">{user?.name || 'Welcome'}</h2>
+                  <p className="text-sm text-gray-500">{user?.phone}</p>
                 </div>
               </div>
               <button onClick={() => setDrawerOpen(false)} className="p-1 text-gray-400">
@@ -69,7 +96,7 @@ export default function Home() {
             </nav>
             <div className="mt-auto px-6">
               <button
-                onClick={() => { setDrawerOpen(false); navigate('/login'); }}
+                onClick={handleLogout}
                 className="w-full flex items-center gap-4 py-3 text-red-600 hover:bg-gray-50 mx-2 my-1 rounded-full transition-colors"
               >
                 <LogOut size={20} />
@@ -129,23 +156,38 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Categories */}
+        {/* Categories - populated from GET /api/categories */}
         <section className="px-6">
           <h2 className="text-lg font-bold text-gray-800 mb-3">Categories</h2>
-          <div className="grid grid-cols-2 gap-4">
-            {CATEGORIES.map(({ label, icon: Icon, path }) => (
-              <button
-                key={label}
-                onClick={() => navigate(path)}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col items-center justify-center gap-2 hover:bg-gray-50 transition-colors aspect-square"
-              >
-                <div className="w-12 h-12 rounded-full bg-[#e5edfa] flex items-center justify-center text-[#004aad]">
-                  <Icon size={22} />
-                </div>
-                <span className="text-xs font-semibold text-gray-700 text-center">{label}</span>
-              </button>
-            ))}
-          </div>
+          {isLoadingCategories ? (
+            <div className="grid grid-cols-2 gap-4">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 aspect-square animate-pulse" />
+              ))}
+            </div>
+          ) : categoryError ? (
+            <p className="text-sm text-red-500">{categoryError}</p>
+          ) : categories.length === 0 ? (
+            <p className="text-sm text-gray-400">No categories yet.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {categories.map((category, i) => {
+                const Icon = CATEGORY_ICONS[i % CATEGORY_ICONS.length];
+                return (
+                  <button
+                    key={category._id}
+                    onClick={() => navigate(`/category/${category.slug}`)}
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col items-center justify-center gap-2 hover:bg-gray-50 transition-colors aspect-square"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-[#e5edfa] flex items-center justify-center text-[#004aad]">
+                      <Icon size={22} />
+                    </div>
+                    <span className="text-xs font-semibold text-gray-700 text-center">{category.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </section>
       </main>
 

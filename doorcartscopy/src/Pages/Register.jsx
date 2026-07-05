@@ -1,14 +1,20 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, User, Camera, MapPin, LocateFixed, Info } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import * as authService from '../api/authService';
+import * as userService from '../api/userService';
 
 export default function Register() {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
   const [fullName, setFullName] = useState('');
   const [address, setAddress] = useState('');
   const [photo, setPhoto] = useState(null);
   const [locating, setLocating] = useState(false);
   const [locationSet, setLocationSet] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef(null);
 
   const isFormValid = fullName.trim().length > 1 && address.trim().length > 3;
@@ -18,6 +24,9 @@ export default function Register() {
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
     if (file) setPhoto(URL.createObjectURL(file));
+    // Note: the backend User model has no avatar/photo field today, so this
+    // preview is local-only. Add an `avatarUrl` field to the User schema and
+    // an upload endpoint if you want this persisted.
   };
 
   const handleSetLocation = () => {
@@ -29,10 +38,43 @@ export default function Register() {
     }, 1200);
   };
 
-  const handleCreateUser = () => {
+  // Persists the display name via PUT /api/auth/me, then best-effort saves a
+  // single free-text address as the user's default structured address via
+  // POST /api/users/addresses. The backend's Address schema wants separate
+  // city/state/postalCode fields; since this form only collects one free-text
+  // line we stash it all in `line1` with placeholder values for the rest.
+  // Swap in real city/state/pincode inputs for production use.
+  const handleCreateUser = async () => {
     if (!isFormValid) return;
-    // TODO: wire up to registration API
-    navigate('/home');
+    setErrorMessage('');
+    setIsSaving(true);
+    try {
+      await authService.updateMe({ name: fullName.trim() });
+
+      try {
+        await userService.addAddress({
+          label: 'Home',
+          fullName: fullName.trim(),
+          phone: '',
+          line1: address.trim(),
+          city: 'N/A',
+          state: 'N/A',
+          postalCode: '000000',
+          isDefault: true,
+        });
+      } catch (addrErr) {
+        // Non-fatal: profile name is saved either way. Surface it in the
+        // console for debugging rather than blocking the user.
+        console.warn('Address could not be saved:', addrErr.response?.data?.message || addrErr.message);
+      }
+
+      await refreshUser();
+      navigate('/home');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Could not save your profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -145,18 +187,22 @@ export default function Register() {
           </p>
         </div>
 
+        {errorMessage && (
+          <p className="text-xs text-center text-red-500 font-semibold px-2">{errorMessage}</p>
+        )}
+
         <div className="flex-grow" />
 
         {/* Primary Action */}
         <button
           onClick={handleCreateUser}
-          disabled={!isFormValid}
+          disabled={!isFormValid || isSaving}
           className={`w-full h-14 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform shadow-sm mt-4 ${
-            isFormValid ? 'bg-[#004aad] text-white' : 'bg-gray-200 text-gray-400'
+            isFormValid && !isSaving ? 'bg-[#004aad] text-white' : 'bg-gray-200 text-gray-400'
           }`}
         >
-          Create New User
-          <ArrowRight size={20} />
+          {isSaving ? 'Saving...' : 'Create New User'}
+          {!isSaving && <ArrowRight size={20} />}
         </button>
       </main>
     </div>
