@@ -19,7 +19,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.0",
     "morgan": "^1.11.0",
-    "razorpay": "^2.9.4",
+    "razorpay": "^2.9.6",
     "slugify": "^1.6.9"
   },
   "devDependencies": {

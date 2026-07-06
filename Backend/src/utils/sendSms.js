@@ -47,7 +47,12 @@ const sendSms = async (recipientPhone, message) => {
 const sendOtpSms = async (phone, code) => {
   const minutes = process.env.OTP_EXPIRES_MINUTES || 5;
   const message = `Your Doorcarts verification code is ${code}. It expires in ${minutes} minutes. Do not share this code with anyone.`;
-  return sendSms(phone, message);
+  console.log('\n=============================================');
+  console.log(`📱 MOCK SMS TO ${phone}:`);
+  console.log(`🔑 OTP CODE: ${code}`);
+  console.log('=============================================\n');
+  return { success: true };
+  // return sendSms(phone, message);
 };
 
 module.exports = { sendSms, sendOtpSms };
