@@ -1,3 +1,4 @@
+const mongoose = require('mongoose'); // <-- Added mongoose to validate IDs
 const asyncHandler = require('../middleware/asyncHandler');
 const { ApiError, sendSuccess } = require('../utils/apiResponse');
 const Category = require('../models/Category');
@@ -10,12 +11,25 @@ const getCategories = asyncHandler(async (req, res) => {
   return sendSuccess(res, 200, { categories });
 });
 
-// @desc    Get single category by slug
+// @desc    Get single category by slug OR ID
 // @route   GET /api/categories/:slug
 // @access  Public
 const getCategoryBySlug = asyncHandler(async (req, res) => {
-  const category = await Category.findOne({ slug: req.params.slug, isActive: true });
+  const param = req.params.slug;
+  let query = { isActive: true };
+
+  // SMART ROUTING: If the parameter looks like a MongoDB ID, search by ID OR slug
+  if (mongoose.isValidObjectId(param)) {
+    query.$or = [{ _id: param }, { slug: param }];
+  } else {
+    // Otherwise, strictly search by slug text
+    query.slug = param;
+  }
+
+  const category = await Category.findOne(query);
+  
   if (!category) throw new ApiError(404, 'Category not found');
+  
   return sendSuccess(res, 200, { category });
 });
 
