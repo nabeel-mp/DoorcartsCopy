@@ -1,13 +1,17 @@
-import api from './axiosConfig';
+import axiosInstance from './axiosConfig';
 
-// GET /api/products?keyword=&category=&minPrice=&maxPrice=&sort=&page=&limit=
-export const getProducts = async (params = {}) => {
-  const { data } = await api.get('/products', { params });
-  return data.data; // { products, total, page, pages }
+export const getProducts = async () => {
+  return await axiosInstance.get('/products');
 };
 
-// GET /api/products/:slug
-export const getProductBySlug = async (slug) => {
-  const { data } = await api.get(`/products/${slug}`);
-  return data.data.product;
+export const getProductById = async (id) => {
+  return await axiosInstance.get(`/products/${id}`);
+};
+
+export const getProductsByCategory = async (categoryId) => {
+  // If your backend supports querying by category directly:
+  // return await axiosInstance.get(`/products?category=${categoryId}`);
+  
+  // Alternatively, fetch all and let the frontend filter (used as fallback)
+  return await axiosInstance.get('/products');
 };

@@ -1,123 +1,144 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, Loader2 } from 'lucide-react';
-import BottomNav from '../components/BottomNav';
-import * as categoryService from '../api/categoryService';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, ShoppingCart, Star } from 'lucide-react';
 import * as productService from '../api/productService';
-
-const formatINR = (n) => `₹${Number(n).toLocaleString('en-IN')}`;
+import * as categoryService from '../api/categoryService';
 
 export default function CategoryProducts() {
+  // The 'slug' parameter holds the category._id based on our App.jsx routing
+  const { slug } = useParams(); 
   const navigate = useNavigate();
-  const { slug } = useParams();
-  const [category, setCategory] = useState(null);
+  
   const [products, setProducts] = useState([]);
+  const [categoryName, setCategoryName] = useState('Loading...');
   const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    let cancelled = false;
-    
-    const load = async () => {
-      setIsLoading(true);
-      setErrorMessage('');
+    const fetchCategoryAndProducts = async () => {
       try {
-        // 1. Fetch Category
-        const catResponse = await categoryService.getCategoryBySlug(slug);
-        
-        // Safely unwrap Axios response if needed
-        const catData = catResponse.data || catResponse; 
-        
-        if (cancelled) return;
-        setCategory(catData);
+        setIsLoading(true);
 
-        // 2. Fetch Products for this Category
-        // Using catData._id to ensure we pass the correct identifier
-        const prodResponse = await productService.getProducts({ category: catData._id });
-        
-        // Safely handle different possible backend response structures
-        const items = prodResponse.data?.products || prodResponse.data || prodResponse.products || prodResponse || [];
-        
-        if (!cancelled) setProducts(items);
-        
-      } catch (err) {
-        if (!cancelled) {
-          setErrorMessage(err.response?.data?.message || 'Could not load this category.');
+        // 1. Fetch Category Name for the Header
+        const catRes = await categoryService.getCategories();
+        const categories = catRes.data?.data || catRes.data || catRes || [];
+        const currentCat = categories.find(c => c._id === slug || c.slug === slug);
+        if (currentCat) {
+          setCategoryName(currentCat.name);
+        } else {
+          setCategoryName('Products');
         }
+
+        // 2. Fetch Products
+        const prodRes = await productService.getProducts();
+        
+        // Handle different standard backend response structures
+        const allProducts = prodRes.data?.data || prodRes.data?.products || prodRes.data || [];
+        
+        // 3. Filter products that belong to this specific category ID
+        // (Handles both populated category objects and flat string IDs)
+        const filteredProducts = allProducts.filter(p => 
+          p.category === slug || p.category?._id === slug
+        );
+
+        setProducts(filteredProducts);
+      } catch (error) {
+        console.error("Error fetching category products:", error);
+        setCategoryName('Error loading category');
       } finally {
-        if (!cancelled) setIsLoading(false);
+        setIsLoading(false);
       }
     };
-    
-    load();
-    return () => { cancelled = true; };
+
+    fetchCategoryAndProducts();
   }, [slug]);
 
   return (
-    <div className="relative w-full max-w-md mx-auto min-h-[100dvh] bg-[#f9f9fc] font-sans pb-24">
-      <header className="w-full sticky top-0 z-50 bg-[#004aad] shadow-md flex items-center gap-3 px-4 h-16">
-        <button onClick={() => navigate(-1)} className="text-white p-2 rounded-full hover:bg-white/10 transition-colors">
-          <ArrowLeft size={20} />
-        </button>
-        <h1 className="text-lg font-extrabold text-white truncate">
-          {category?.name || 'Category'}
-        </h1>
-        <button onClick={() => navigate('/cart')} className="ml-auto text-white p-2 rounded-full hover:bg-white/10 transition-colors">
-          <ShoppingCart size={20} />
+    <div className="relative w-full max-w-md mx-auto min-h-[100dvh] bg-[#f9f9fc] font-sans">
+      
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-[#004aad] shadow-md flex items-center justify-between px-4 h-16">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="text-white p-2 rounded-full hover:bg-white/10 transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <h1 className="text-lg font-extrabold text-white truncate max-w-[200px]">
+            {categoryName}
+          </h1>
+        </div>
+        <button 
+          onClick={() => navigate('/cart')} 
+          className="text-white p-2 rounded-full hover:bg-white/10 transition-colors relative"
+        >
+          <ShoppingCart size={22} />
         </button>
       </header>
 
-      <main className="px-5 py-6">
+      {/* Main Content */}
+      <main className="p-4">
         {isLoading ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="animate-spin text-[#004aad]" size={28} />
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#004aad]"></div>
           </div>
-        ) : errorMessage ? (
-          <p className="text-center text-sm text-red-500 py-10">{errorMessage}</p>
         ) : products.length === 0 ? (
-          <p className="text-center text-sm text-gray-400 py-10">No products in this category yet.</p>
+          <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+            <ShoppingCart size={48} className="mb-4 opacity-50" />
+            <p className="text-lg font-semibold text-gray-500">No products found</p>
+            <p className="text-sm">Check back later for new stock.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
-            {products.map((product) => {
-              const price = product.discountPrice > 0 ? product.discountPrice : product.price;
-              return (
-                <button
-                  key={product._id}
-                  // Fallback to _id if slug is missing on older database entries
-                  onClick={() => navigate(`/product/${product.slug || product._id}`)}
-                  className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden text-left hover:shadow-md transition-shadow flex flex-col"
-                >
-                  <div className="h-32 bg-gray-100 w-full flex items-center justify-center p-2">
-                    {product.images?.[0] || product.image ? (
-                      <img 
-                        src={product.images?.[0] || product.image} 
-                        alt={product.name} 
-                        className="w-full h-full object-contain mix-blend-multiply" 
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 rounded" />
-                    )}
+            {products.map((product) => (
+              <div 
+                key={product._id} 
+                onClick={() => navigate(`/product/${product._id}`)}
+                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden active:scale-95 transition-transform cursor-pointer flex flex-col"
+              >
+                {/* Product Image */}
+                <div className="h-32 bg-gray-50 flex items-center justify-center p-2 relative">
+                  <img 
+                    src={product.images?.[0] || 'https://via.placeholder.com/150'} 
+                    alt={product.name}
+                    className="max-h-full max-w-full object-contain mix-blend-multiply"
+                  />
+                  {product.discountPrice && (
+                    <span className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-md">
+                      SALE
+                    </span>
+                  )}
+                </div>
+                
+                {/* Product Details */}
+                <div className="p-3 flex flex-col flex-1">
+                  <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-tight mb-1">
+                    {product.name}
+                  </h3>
+                  
+                  <div className="flex items-center gap-1 mb-2">
+                    <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                    <span className="text-xs font-semibold text-gray-600">4.5</span>
                   </div>
-                  <div className="p-3 flex flex-col flex-grow">
-                    <p className="text-sm font-bold text-gray-800 line-clamp-2 leading-tight mb-2 flex-grow">{product.name}</p>
-                    <div className="flex items-baseline gap-1 mt-auto">
-                      <span className="text-sm font-extrabold text-[#004aad]">{formatINR(price)}</span>
-                      {product.discountPrice > 0 && (
-                        <span className="text-xs text-gray-400 line-through">{formatINR(product.price)}</span>
+
+                  <div className="mt-auto">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-base font-extrabold text-[#004aad]">
+                        ₹{product.discountPrice || product.price}
+                      </span>
+                      {product.discountPrice && (
+                        <span className="text-xs text-gray-400 line-through font-medium">
+                          ₹{product.price}
+                        </span>
                       )}
                     </div>
-                    {product.stock <= 0 && (
-                      <span className="text-[10px] font-bold text-red-500 uppercase mt-1 block">Out of stock</span>
-                    )}
                   </div>
-                </button>
-              );
-            })}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </main>
-
-      <BottomNav active="services" />
     </div>
   );
 }
