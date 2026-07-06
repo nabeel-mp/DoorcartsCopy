@@ -5,7 +5,7 @@ import {
   Layers, Grid3x3, Zap, HardHat, Box,
 } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/authContext';
 import * as categoryService from '../api/categoryService';
 
 const SLIDES = [
@@ -25,21 +25,30 @@ export default function Home() {
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [categoryError, setCategoryError] = useState('');
 
-  // GET /api/categories
+  // Fetch Categories
   useEffect(() => {
     let cancelled = false;
+    
     const fetchCategories = async () => {
       try {
-        const data = await categoryService.getCategories();
-        if (!cancelled) setCategories(data);
+        const response = await categoryService.getCategories(); // or getAllCategories() depending on your export
+        // Extract data safely, accommodating both Axios responses and direct arrays
+        const categoryData = response.data || response; 
+        
+        if (!cancelled) {
+          setCategories(categoryData);
+        }
       } catch (err) {
         if (!cancelled) {
           setCategoryError(err.response?.data?.message || 'Could not load categories.');
         }
       } finally {
-        if (!cancelled) setIsLoadingCategories(false);
+        if (!cancelled) {
+          setIsLoadingCategories(false);
+        }
       }
     };
+    
     fetchCategories();
     return () => { cancelled = true; };
   }, []);
@@ -52,55 +61,61 @@ export default function Home() {
 
   return (
     <div className="relative w-full max-w-md mx-auto min-h-[100dvh] bg-[#f9f9fc] font-sans pb-24">
+      
       {/* Navigation Drawer */}
       {drawerOpen && (
         <div className="fixed inset-0 z-[100]">
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
             onClick={() => setDrawerOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-80 max-w-[85%] bg-white shadow-xl rounded-r-3xl flex flex-col py-6">
+          <div className="absolute left-0 top-0 h-full w-80 max-w-[85%] bg-white shadow-xl rounded-r-3xl flex flex-col py-6 animate-in slide-in-from-left-4 duration-300">
             <div className="px-6 mb-8 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-[#004aad] text-white flex items-center justify-center font-bold text-lg">
+                <div className="w-12 h-12 rounded-full bg-[#004aad] text-white flex items-center justify-center font-bold text-lg shadow-inner">
                   {(user?.name || 'U').slice(0, 2).toUpperCase()}
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-[#004aad]">{user?.name || 'Welcome'}</h2>
-                  <p className="text-sm text-gray-500">{user?.phone}</p>
+                  <p className="text-sm text-gray-500">{user?.phone || 'Guest User'}</p>
                 </div>
               </div>
-              <button onClick={() => setDrawerOpen(false)} className="p-1 text-gray-400">
+              <button onClick={() => setDrawerOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
                 <X size={20} />
               </button>
             </div>
+            
             <nav className="flex-1 overflow-y-auto">
               <ul className="space-y-1">
                 {[
                   { label: 'My Profile', icon: User, path: '/register' },
-                  { label: 'Order History', icon: History, path: '/orders' },
+                  { label: 'Order History', icon: History, path: '/order-history' }, // Updated to standard route
                   { label: 'Wallet & Commissions', icon: Wallet, path: '/wallet' },
                   { label: 'Settings', icon: Settings, path: '#' },
                 ].map(({ label, icon: Icon, path }) => (
                   <li key={label}>
                     <button
-                      onClick={() => { setDrawerOpen(false); if (path !== '#') navigate(path); }}
-                      className="w-full flex items-center gap-4 px-6 py-3 text-gray-600 hover:bg-gray-50 mx-2 my-1 rounded-full transition-colors"
+                      onClick={() => { 
+                        setDrawerOpen(false); 
+                        if (path !== '#') navigate(path); 
+                      }}
+                      className="w-full flex items-center gap-4 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-[#004aad] mx-2 my-1 rounded-full transition-all"
                     >
                       <Icon size={20} />
-                      {label}
+                      <span className="font-medium">{label}</span>
                     </button>
                   </li>
                 ))}
               </ul>
             </nav>
+            
             <div className="mt-auto px-6">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-4 py-3 text-red-600 hover:bg-gray-50 mx-2 my-1 rounded-full transition-colors"
+                className="w-full flex items-center gap-4 py-3 text-red-500 hover:bg-red-50 hover:text-red-600 mx-2 my-1 rounded-full transition-all"
               >
                 <LogOut size={20} />
-                Logout
+                <span className="font-medium">Logout</span>
               </button>
             </div>
           </div>
@@ -112,27 +127,28 @@ export default function Home() {
         <div className="flex justify-between items-center px-6 h-16">
           <button
             onClick={() => setDrawerOpen(true)}
-            className="text-white p-2 rounded-full hover:bg-white/10 transition-colors"
+            className="text-white p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors"
           >
-            <Menu size={22} />
+            <Menu size={24} />
           </button>
-          <h1 className="text-2xl font-extrabold text-white">Doorcarts</h1>
-          <button className="text-white p-2 rounded-full hover:bg-white/10 transition-colors">
-            <Search size={22} />
+          <h1 className="text-2xl font-extrabold text-white tracking-wide">Doorcarts</h1>
+          <button className="text-white p-2 -mr-2 rounded-full hover:bg-white/10 transition-colors">
+            <Search size={24} />
           </button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="w-full flex flex-col gap-5 pt-4 pb-4">
-        {/* Search */}
+      <main className="w-full flex flex-col gap-6 pt-6 pb-4">
+        
+        {/* Search Bar */}
         <section className="px-6">
-          <div className="relative">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="relative shadow-sm group">
+            <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#004aad] transition-colors" />
             <input
               type="text"
               placeholder="Search construction materials..."
-              className="block w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-xl text-gray-800 focus:ring-2 focus:ring-[#004aad] focus:border-[#004aad] transition-all shadow-sm outline-none"
+              className="block w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-800 focus:ring-2 focus:ring-[#004aad]/20 focus:border-[#004aad] transition-all outline-none"
             />
           </div>
         </section>
@@ -145,10 +161,10 @@ export default function Home() {
                 key={slide.title}
                 className="snap-center shrink-0 w-[85%] bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
               >
-                <div className={`h-32 relative bg-gradient-to-br ${slide.gradient}`}>
-                  <div className="absolute bottom-4 left-4 text-white">
-                    <h3 className="text-lg font-bold">{slide.title}</h3>
-                    <p className="text-sm opacity-90">{slide.subtitle}</p>
+                <div className={`h-36 relative bg-gradient-to-br ${slide.gradient} p-5 flex flex-col justify-end`}>
+                  <div className="text-white">
+                    <h3 className="text-xl font-bold mb-1">{slide.title}</h3>
+                    <p className="text-sm text-white/90 font-medium">{slide.subtitle}</p>
                   </div>
                 </div>
               </div>
@@ -156,9 +172,13 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Categories - populated from GET /api/categories */}
+        {/* Categories List */}
         <section className="px-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-3">Categories</h2>
+          <div className="flex justify-between items-end mb-4">
+            <h2 className="text-lg font-bold text-gray-800">Categories</h2>
+            <button className="text-sm font-semibold text-[#004aad] hover:underline">See All</button>
+          </div>
+          
           {isLoadingCategories ? (
             <div className="grid grid-cols-2 gap-4">
               {[0, 1, 2, 3].map((i) => (
@@ -166,9 +186,13 @@ export default function Home() {
               ))}
             </div>
           ) : categoryError ? (
-            <p className="text-sm text-red-500">{categoryError}</p>
+            <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100 text-center">
+              {categoryError}
+            </div>
           ) : categories.length === 0 ? (
-            <p className="text-sm text-gray-400">No categories yet.</p>
+            <div className="bg-gray-50 text-gray-500 p-6 rounded-xl text-sm font-medium border border-gray-200 text-center">
+              No categories available yet.
+            </div>
           ) : (
             <div className="grid grid-cols-2 gap-4">
               {categories.map((category, i) => {
@@ -176,13 +200,14 @@ export default function Home() {
                 return (
                   <button
                     key={category._id}
-                    onClick={() => navigate(`/category/${category.slug}`)}
-                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col items-center justify-center gap-2 hover:bg-gray-50 transition-colors aspect-square"
+                    // Crucial fix: route using _id to match CategoryProducts.jsx
+                    onClick={() => navigate(`/category/${category._id}`)} 
+                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col items-center justify-center gap-3 hover:bg-[#f0f5ff] hover:border-[#004aad]/30 transition-all aspect-square group"
                   >
-                    <div className="w-12 h-12 rounded-full bg-[#e5edfa] flex items-center justify-center text-[#004aad]">
-                      <Icon size={22} />
+                    <div className="w-14 h-14 rounded-full bg-[#e5edfa] flex items-center justify-center text-[#004aad] group-hover:scale-110 transition-transform">
+                      <Icon size={26} strokeWidth={2.5} />
                     </div>
-                    <span className="text-xs font-semibold text-gray-700 text-center">{category.name}</span>
+                    <span className="text-sm font-bold text-gray-700 text-center line-clamp-2">{category.name}</span>
                   </button>
                 );
               })}
@@ -191,7 +216,7 @@ export default function Home() {
         </section>
       </main>
 
-      <BottomNav active="services" />
+      <BottomNav active="home" />
     </div>
   );
 }
