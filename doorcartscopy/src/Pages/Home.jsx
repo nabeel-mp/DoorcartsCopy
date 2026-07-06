@@ -13,8 +13,6 @@ const SLIDES = [
   { title: 'Bulk Cement Deals', subtitle: 'Free site delivery', gradient: 'from-[#5d5f5f] to-[#2f3133]' },
 ];
 
-// The backend has no concept of a category icon, so we cycle through a
-// small fixed set of lucide icons by index purely for visual variety.
 const CATEGORY_ICONS = [Layers, HardHat, Grid3x3, Zap, Box];
 
 export default function Home() {
@@ -25,27 +23,17 @@ export default function Home() {
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [categoryError, setCategoryError] = useState('');
 
-  // Fetch Categories
   useEffect(() => {
     let cancelled = false;
-    
     const fetchCategories = async () => {
       try {
-        const response = await categoryService.getCategories(); // or getAllCategories() depending on your export
-        // Extract data safely, accommodating both Axios responses and direct arrays
+        const response = await categoryService.getCategories();
         const categoryData = response.data || response; 
-        
-        if (!cancelled) {
-          setCategories(categoryData);
-        }
+        if (!cancelled) setCategories(categoryData);
       } catch (err) {
-        if (!cancelled) {
-          setCategoryError(err.response?.data?.message || 'Could not load categories.');
-        }
+        if (!cancelled) setCategoryError(err.response?.data?.message || 'Could not load categories.');
       } finally {
-        if (!cancelled) {
-          setIsLoadingCategories(false);
-        }
+        if (!cancelled) setIsLoadingCategories(false);
       }
     };
     
@@ -62,7 +50,6 @@ export default function Home() {
   return (
     <div className="relative w-full max-w-md mx-auto min-h-[100dvh] bg-[#f9f9fc] font-sans pb-24">
       
-      {/* Navigation Drawer */}
       {drawerOpen && (
         <div className="fixed inset-0 z-[100]">
           <div
@@ -88,8 +75,8 @@ export default function Home() {
             <nav className="flex-1 overflow-y-auto">
               <ul className="space-y-1">
                 {[
-                  { label: 'My Profile', icon: User, path: '/register' },
-                  { label: 'Order History', icon: History, path: '/order-history' }, // Updated to standard route
+                  { label: 'My Account', icon: User, path: '/account' },
+                  { label: 'Order History', icon: History, path: '/order-history' },
                   { label: 'Wallet & Commissions', icon: Wallet, path: '/wallet' },
                   { label: 'Settings', icon: Settings, path: '#' },
                 ].map(({ label, icon: Icon, path }) => (
@@ -110,10 +97,7 @@ export default function Home() {
             </nav>
             
             <div className="mt-auto px-6">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-4 py-3 text-red-500 hover:bg-red-50 hover:text-red-600 mx-2 my-1 rounded-full transition-all"
-              >
+              <button onClick={handleLogout} className="w-full flex items-center gap-4 py-3 text-red-500 hover:bg-red-50 hover:text-red-600 mx-2 my-1 rounded-full transition-all">
                 <LogOut size={20} />
                 <span className="font-medium">Logout</span>
               </button>
@@ -122,13 +106,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* Top App Bar */}
       <header className="bg-[#004aad] w-full sticky top-0 z-40 shadow-md">
         <div className="flex justify-between items-center px-6 h-16">
-          <button
-            onClick={() => setDrawerOpen(true)}
-            className="text-white p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors"
-          >
+          <button onClick={() => setDrawerOpen(true)} className="text-white p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors">
             <Menu size={24} />
           </button>
           <h1 className="text-2xl font-extrabold text-white tracking-wide">Doorcarts</h1>
@@ -138,29 +118,18 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="w-full flex flex-col gap-6 pt-6 pb-4">
-        
-        {/* Search Bar */}
         <section className="px-6">
           <div className="relative shadow-sm group">
             <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#004aad] transition-colors" />
-            <input
-              type="text"
-              placeholder="Search construction materials..."
-              className="block w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-800 focus:ring-2 focus:ring-[#004aad]/20 focus:border-[#004aad] transition-all outline-none"
-            />
+            <input type="text" placeholder="Search materials..." className="block w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-800 focus:ring-2 focus:ring-[#004aad]/20 focus:border-[#004aad] transition-all outline-none" />
           </div>
         </section>
 
-        {/* Hero Slider */}
         <section className="px-6 overflow-hidden">
           <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {SLIDES.map((slide) => (
-              <div
-                key={slide.title}
-                className="snap-center shrink-0 w-[85%] bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
-              >
+              <div key={slide.title} className="snap-center shrink-0 w-[85%] bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className={`h-36 relative bg-gradient-to-br ${slide.gradient} p-5 flex flex-col justify-end`}>
                   <div className="text-white">
                     <h3 className="text-xl font-bold mb-1">{slide.title}</h3>
@@ -172,7 +141,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Categories List */}
         <section className="px-6">
           <div className="flex justify-between items-end mb-4">
             <h2 className="text-lg font-bold text-gray-800">Categories</h2>
@@ -186,13 +154,9 @@ export default function Home() {
               ))}
             </div>
           ) : categoryError ? (
-            <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100 text-center">
-              {categoryError}
-            </div>
+            <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100 text-center">{categoryError}</div>
           ) : categories.length === 0 ? (
-            <div className="bg-gray-50 text-gray-500 p-6 rounded-xl text-sm font-medium border border-gray-200 text-center">
-              No categories available yet.
-            </div>
+            <div className="bg-gray-50 text-gray-500 p-6 rounded-xl text-sm font-medium border border-gray-200 text-center">No categories available yet.</div>
           ) : (
             <div className="grid grid-cols-2 gap-4">
               {categories.map((category, i) => {
@@ -200,7 +164,6 @@ export default function Home() {
                 return (
                   <button
                     key={category._id}
-                    // Crucial fix: route using _id to match CategoryProducts.jsx
                     onClick={() => navigate(`/category/${category._id}`)} 
                     className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col items-center justify-center gap-3 hover:bg-[#f0f5ff] hover:border-[#004aad]/30 transition-all aspect-square group"
                   >

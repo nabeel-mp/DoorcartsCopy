@@ -7,9 +7,9 @@ const User = require('../models/User');
 
 const categories = [
   { name: 'Electronics' },
-  { name: 'Fashion' },
-  { name: 'Home & Kitchen' },
-  { name: 'Beauty & Personal Care' }
+  { name: 'Plumbing' },
+  { name: 'Hardware & Tools' },
+  { name: 'Electricals' }
 ];
 
 const run = async () => {
@@ -26,42 +26,60 @@ const run = async () => {
 
   const createdCategories = await Category.insertMany(categories);
   const electronics = createdCategories.find((c) => c.name === 'Electronics');
-  const fashion = createdCategories.find((c) => c.name === 'Fashion');
+  const plumbing = createdCategories.find((c) => c.name === 'Plumbing');
+  const hardware = createdCategories.find((c) => c.name === 'Hardware & Tools');
 
   await Product.insertMany([
     {
-      name: 'Wireless Bluetooth Earbuds',
-      description: 'Compact true wireless earbuds with active noise cancellation and 30-hour battery life.',
-      images: ['https://via.placeholder.com/500x500?text=Earbuds'],
+      name: 'Havells 1.5 sq mm Wire',
+      description: 'High quality copper wire for domestic electrical wiring. 90m length.',
+      images: ['https://via.placeholder.com/500x500?text=Wire'],
       category: electronics._id,
-      price: 2999,
-      discountPrice: 2299,
-      stock: 50,
-      brand: 'AudioMax'
-    },
-    {
-      name: 'Smart Fitness Band',
-      description: 'Track heart rate, steps, sleep, and SpO2 with a 7-day battery.',
-      images: ['https://via.placeholder.com/500x500?text=Fitness+Band'],
-      category: electronics._id,
-      price: 1999,
-      stock: 30,
-      brand: 'FitTrack'
-    },
-    {
-      name: "Men's Casual Cotton Shirt",
-      description: 'Breathable 100% cotton shirt, regular fit, available in multiple colors.',
-      images: ['https://via.placeholder.com/500x500?text=Shirt'],
-      category: fashion._id,
-      price: 899,
-      discountPrice: 699,
+      price: 1200,
+      discountPrice: 1050,
       stock: 100,
-      brand: 'UrbanThread'
+      brand: 'Havells'
+    },
+    {
+      name: 'Ashirvad PVC Pipes (2 inch)',
+      description: 'Durable PVC pipes for drainage and plumbing needs. 3m length.',
+      images: ['https://via.placeholder.com/500x500?text=PVC+Pipe'],
+      category: plumbing._id,
+      price: 450,
+      stock: 200,
+      brand: 'Ashirvad'
+    },
+    {
+      name: 'Crompton Ceiling Fan',
+      description: 'Energy efficient high speed ceiling fan.',
+      images: ['https://via.placeholder.com/500x500?text=Ceiling+Fan'],
+      category: electronics._id,
+      price: 2100,
+      discountPrice: 1850,
+      stock: 45,
+      brand: 'Crompton'
+    },
+    {
+      name: 'Jaguar Bathroom Tap',
+      description: 'Premium stainless steel bathroom tap with chrome finish.',
+      images: ['https://via.placeholder.com/500x500?text=Bathroom+Tap'],
+      category: plumbing._id,
+      price: 1500,
+      discountPrice: 1350,
+      stock: 30,
+      brand: 'Jaguar'
+    },
+    {
+      name: 'Bosch Power Drill',
+      description: '500W professional power drill machine.',
+      images: ['https://via.placeholder.com/500x500?text=Power+Drill'],
+      category: hardware._id,
+      price: 3200,
+      stock: 15,
+      brand: 'Bosch'
     }
   ]);
 
-  // Optional: create a default admin so there's an account to manage the store.
-  // Change this phone number to your own before running the seed script.
   const adminPhone = process.env.SEED_ADMIN_PHONE || '+919999999999';
   const existingAdmin = await User.findOne({ phone: adminPhone });
   if (!existingAdmin) {

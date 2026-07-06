@@ -75,21 +75,20 @@ export default function Payment() {
         name: "Doorcarts",
         description: "Payment for Materials",
         order_id: order_id,
-        handler: async function (response) {
+       handler: async function (response) {
           try {
-            // 4. Verify Payment on Backend
-            const verifyRes = await axios.post(`${baseURL}/api/payments/verify-payment`, {
+            const verifyRes = await axios.post(`${baseURL}/api/payments/verify`, {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature
+              razorpay_signature: response.razorpay_signature,
+              orderId: order_id
             }, { headers });
 
-            // Accept varying success boolean locations
             if (verifyRes.data?.success || verifyRes.status === 200) {
               setStatus('success');
-              // Navigate to tracking page, passing the verified order ID if available
-              const finalOrderId = verifyRes.data?.data?.orderId || order_id;
-              setTimeout(() => navigate(`/order-status`, { state: { orderId: finalOrderId } }), 1000);
+              const finalOrderId = verifyRes.data?.data?.order?._id || order_id;
+              // REPLACED navigation to target the new Success Page:
+              setTimeout(() => navigate(`/order-success`, { state: { orderId: finalOrderId } }), 1000);
             }
           } catch (err) {
             console.error("Payment Verification Failed", err);

@@ -1,16 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { HardHat, CalendarDays, Headphones, User } from 'lucide-react';
 
-// Shared bottom navigation bar.
-// `active` accepts: 'services' | 'bookings' | 'support' | 'account'
 export default function BottomNav({ active = 'services' }) {
   const navigate = useNavigate();
 
   const items = [
     { key: 'services', label: 'Services', icon: HardHat, path: '/home' },
-    { key: 'bookings', label: 'Bookings', icon: CalendarDays, path: '/orders' },
+    { key: 'bookings', label: 'Bookings', icon: CalendarDays, path: '/order-history' },
     { key: 'support', label: 'Support', icon: Headphones, path: '/support' },
-    { key: 'account', label: 'Account', icon: User, path: '/wallet' },
+    { key: 'account', label: 'Account', icon: User, path: '/account' },
   ];
 
   return (

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, User, Camera, MapPin, LocateFixed, Info } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/authContext';
 import * as authService from '../api/authService';
 import * as userService from '../api/userService';
 
