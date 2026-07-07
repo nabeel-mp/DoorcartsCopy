@@ -5,7 +5,7 @@ import * as productService from '../api/productService';
 import * as categoryService from '../api/categoryService';
 
 export default function CategoryProducts() {
-  // The 'slug' parameter holds the category._id based on our App.jsx routing
+  // The 'slug' parameter holds the category._id
   const { slug } = useParams(); 
   const navigate = useNavigate();
   
@@ -20,7 +20,7 @@ export default function CategoryProducts() {
 
         // 1. Fetch Category Name for the Header
         const catRes = await categoryService.getCategories();
-        const categories = catRes.data?.data || catRes.data || catRes || [];
+        const categories = catRes?.data?.data || catRes?.data || catRes || [];
         const currentCat = categories.find(c => c._id === slug || c.slug === slug);
         if (currentCat) {
           setCategoryName(currentCat.name);
@@ -28,19 +28,19 @@ export default function CategoryProducts() {
           setCategoryName('Products');
         }
 
-        // 2. Fetch Products
-        const prodRes = await productService.getProducts();
+        // 2. Fetch Products OPTIMIZED: Let the backend filter by category directly
+        // productService.getProducts() returns an object: { products: [...], total, page }
+        const prodRes = await productService.getProducts({ category: slug });
         
-        // Handle different standard backend response structures
-        const allProducts = prodRes.data?.data || prodRes.data?.products || prodRes.data || [];
-        
-        // 3. Filter products that belong to this specific category ID
-        // (Handles both populated category objects and flat string IDs)
-        const filteredProducts = allProducts.filter(p => 
-          p.category === slug || p.category?._id === slug
-        );
+        // 3. Safely extract the products array from the response object
+        let fetchedProducts = [];
+        if (prodRes && Array.isArray(prodRes.products)) {
+          fetchedProducts = prodRes.products; // Standard response
+        } else if (Array.isArray(prodRes)) {
+          fetchedProducts = prodRes; // Fallback if API changes
+        }
 
-        setProducts(filteredProducts);
+        setProducts(fetchedProducts);
       } catch (error) {
         console.error("Error fetching category products:", error);
         setCategoryName('Error loading category');
@@ -77,7 +77,7 @@ export default function CategoryProducts() {
       </header>
 
       {/* Main Content */}
-      <main className="p-4">
+      <main className="p-4 pb-20">
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#004aad]"></div>

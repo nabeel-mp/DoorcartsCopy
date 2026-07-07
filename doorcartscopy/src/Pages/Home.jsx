@@ -28,7 +28,7 @@ export default function Home() {
     const fetchCategories = async () => {
       try {
         const response = await categoryService.getCategories();
-        const categoryData = response.data || response; 
+        const categoryData = response.data?.data || response.data || response || [];
         if (!cancelled) setCategories(categoryData);
       } catch (err) {
         if (!cancelled) setCategoryError(err.response?.data?.message || 'Could not load categories.');
@@ -36,7 +36,7 @@ export default function Home() {
         if (!cancelled) setIsLoadingCategories(false);
       }
     };
-    
+
     fetchCategories();
     return () => { cancelled = true; };
   }, []);
@@ -48,63 +48,78 @@ export default function Home() {
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto min-h-[100dvh] bg-[#f9f9fc] font-sans pb-24">
+    <div className="relative w-full max-w-md mx-auto min-h-[100dvh] bg-[#f9f9fc] font-sans pb-24 overflow-x-hidden">
       
-      {drawerOpen && (
-        <div className="fixed inset-0 z-[100]">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-            onClick={() => setDrawerOpen(false)}
-          />
-          <div className="absolute left-0 top-0 h-full w-80 max-w-[85%] bg-white shadow-xl rounded-r-3xl flex flex-col py-6 animate-in slide-in-from-left-4 duration-300">
-            <div className="px-6 mb-8 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-[#004aad] text-white flex items-center justify-center font-bold text-lg shadow-inner">
-                  {(user?.name || 'U').slice(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-[#004aad]">{user?.name || 'Welcome'}</h2>
-                  <p className="text-sm text-gray-500">{user?.phone || 'Guest User'}</p>
-                </div>
+      {/* SAFE DRAWER RENDERING: 
+        Hidden via CSS opacity/visibility instead of unmounting. 
+        This prevents the "removeChild" crash caused by browser extensions.
+      */}
+      <div 
+        className={`fixed inset-0 z-[100] transition-all duration-300 ${
+          drawerOpen ? 'visible pointer-events-auto' : 'invisible pointer-events-none'
+        }`}
+      >
+        {/* Backdrop */}
+        <div
+          className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
+            drawerOpen ? 'opacity-100' : 'opacity-0'
+          }`}
+          onClick={() => setDrawerOpen(false)}
+        />
+        
+        {/* Sidebar */}
+        <div 
+          className={`absolute left-0 top-0 h-full w-80 max-w-[85%] bg-white shadow-xl rounded-r-3xl flex flex-col py-6 transition-transform duration-300 ${
+            drawerOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <div className="px-6 mb-8 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-[#004aad] text-white flex items-center justify-center font-bold text-lg shadow-inner">
+                {(user?.name || 'U').slice(0, 2).toUpperCase()}
               </div>
-              <button onClick={() => setDrawerOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
-                <X size={20} />
-              </button>
+              <div>
+                <h2 className="text-lg font-bold text-[#004aad]">{user?.name || 'Welcome'}</h2>
+                <p className="text-sm text-gray-500">{user?.phone || 'Guest User'}</p>
+              </div>
             </div>
-            
-            <nav className="flex-1 overflow-y-auto">
-              <ul className="space-y-1">
-                {[
-                  { label: 'My Account', icon: User, path: '/account' },
-                  { label: 'Order History', icon: History, path: '/order-history' },
-                  { label: 'Wallet & Commissions', icon: Wallet, path: '/wallet' },
-                  { label: 'Settings', icon: Settings, path: '#' },
-                ].map(({ label, icon: Icon, path }) => (
-                  <li key={label}>
-                    <button
-                      onClick={() => { 
-                        setDrawerOpen(false); 
-                        if (path !== '#') navigate(path); 
-                      }}
-                      className="w-full flex items-center gap-4 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-[#004aad] mx-2 my-1 rounded-full transition-all"
-                    >
-                      <Icon size={20} />
-                      <span className="font-medium">{label}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-            
-            <div className="mt-auto px-6">
-              <button onClick={handleLogout} className="w-full flex items-center gap-4 py-3 text-red-500 hover:bg-red-50 hover:text-red-600 mx-2 my-1 rounded-full transition-all">
-                <LogOut size={20} />
-                <span className="font-medium">Logout</span>
-              </button>
-            </div>
+            <button onClick={() => setDrawerOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+          
+          <nav className="flex-1 overflow-y-auto">
+            <ul className="space-y-1">
+              {[
+                { label: 'My Account', icon: User, path: '/account' },
+                { label: 'Order History', icon: History, path: '/order-history' },
+                { label: 'Wallet & Commissions', icon: Wallet, path: '/wallet' },
+                { label: 'Settings', icon: Settings, path: '#' },
+              ].map(({ label, icon: Icon, path }) => (
+                <li key={label}>
+                  <button
+                    onClick={() => { 
+                      setDrawerOpen(false); 
+                      if (path !== '#') navigate(path); 
+                    }}
+                    className="w-full flex items-center gap-4 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-[#004aad] mx-2 my-1 rounded-full transition-all"
+                  >
+                    <Icon size={20} />
+                    <span className="font-medium">{label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          
+          <div className="mt-auto px-6">
+            <button onClick={handleLogout} className="w-full flex items-center gap-4 py-3 text-red-500 hover:bg-red-50 hover:text-red-600 mx-2 my-1 rounded-full transition-all">
+              <LogOut size={20} />
+              <span className="font-medium">Logout</span>
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
       <header className="bg-[#004aad] w-full sticky top-0 z-40 shadow-md">
         <div className="flex justify-between items-center px-6 h-16">
@@ -147,35 +162,48 @@ export default function Home() {
             <button className="text-sm font-semibold text-[#004aad] hover:underline">See All</button>
           </div>
           
-          {isLoadingCategories ? (
-            <div className="grid grid-cols-2 gap-4">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 aspect-square animate-pulse" />
-              ))}
-            </div>
-          ) : categoryError ? (
-            <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100 text-center">{categoryError}</div>
-          ) : categories.length === 0 ? (
-            <div className="bg-gray-50 text-gray-500 p-6 rounded-xl text-sm font-medium border border-gray-200 text-center">No categories available yet.</div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4">
-              {categories.map((category, i) => {
-                const Icon = CATEGORY_ICONS[i % CATEGORY_ICONS.length];
-                return (
-                  <button
-                    key={category._id}
-                    onClick={() => navigate(`/category/${category._id}`)} 
-                    className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col items-center justify-center gap-3 hover:bg-[#f0f5ff] hover:border-[#004aad]/30 transition-all aspect-square group"
-                  >
-                    <div className="w-14 h-14 rounded-full bg-[#e5edfa] flex items-center justify-center text-[#004aad] group-hover:scale-110 transition-transform">
-                      <Icon size={26} strokeWidth={2.5} />
-                    </div>
-                    <span className="text-sm font-bold text-gray-700 text-center line-clamp-2">{category.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          {/* SAFE RENDERING: Grouped in a stable min-height div to stop React diffing issues */}
+          <div className="min-h-[150px]">
+            {isLoadingCategories && (
+              <div className="grid grid-cols-2 gap-4">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={`skeleton-${i}`} className="bg-white rounded-xl shadow-sm border border-gray-100 aspect-square animate-pulse" />
+                ))}
+              </div>
+            )}
+
+            {!isLoadingCategories && categoryError && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100 text-center">
+                {categoryError}
+              </div>
+            )}
+
+            {!isLoadingCategories && !categoryError && categories.length === 0 && (
+              <div className="bg-gray-50 text-gray-500 p-6 rounded-xl text-sm font-medium border border-gray-200 text-center">
+                No categories available yet.
+              </div>
+            )}
+
+            {!isLoadingCategories && !categoryError && categories.length > 0 && (
+              <div className="grid grid-cols-2 gap-4">
+                {categories.map((category, i) => {
+                  const Icon = CATEGORY_ICONS[i % CATEGORY_ICONS.length];
+                  return (
+                    <button
+                      key={category._id}
+                      onClick={() => navigate(`/category/${category._id}`)} 
+                      className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col items-center justify-center gap-3 hover:bg-[#f0f5ff] hover:border-[#004aad]/30 transition-all aspect-square group"
+                    >
+                      <div className="w-14 h-14 rounded-full bg-[#e5edfa] flex items-center justify-center text-[#004aad] group-hover:scale-110 transition-transform">
+                        <Icon size={26} strokeWidth={2.5} />
+                      </div>
+                      <span className="text-sm font-bold text-gray-700 text-center line-clamp-2">{category.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </section>
       </main>
 
