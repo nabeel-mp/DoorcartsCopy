@@ -1,6 +1,8 @@
 const asyncHandler = require('../middleware/asyncHandler');
 const { ApiError, sendSuccess } = require('../utils/apiResponse');
 const Product = require('../models/Product');
+const Category = require('../models/Category'); // Added Category model
+const mongoose = require('mongoose');
 
 // @desc    List products with search, category filter, price range, sort, pagination
 // @route   GET /api/products
@@ -21,9 +23,23 @@ const getProducts = asyncHandler(async (req, res) => {
   if (keyword) {
     query.$text = { $search: keyword };
   }
+
+  // FIXED: Handle both ObjectId and Slug filtering safely
   if (category) {
-    query.category = category;
+    if (mongoose.Types.ObjectId.isValid(category)) {
+      query.category = category;
+    } else {
+      // If a slug was passed instead of an ID, look up the category first
+      const categoryDoc = await Category.findOne({ slug: category });
+      if (categoryDoc) {
+        query.category = categoryDoc._id;
+      } else {
+        // If category slug doesn't exist, return empty results early
+        return sendSuccess(res, 200, { products: [], total: 0, page: 1, pages: 0 });
+      }
+    }
   }
+
   if (minPrice || maxPrice) {
     query.price = {};
     if (minPrice) query.price.$gte = Number(minPrice);
@@ -54,11 +70,26 @@ const getProducts = asyncHandler(async (req, res) => {
 // @route   GET /api/products/:slug
 // @access  Public
 const getProductBySlug = asyncHandler(async (req, res) => {
-  const product = await Product.findOne({ slug: req.params.slug, isActive: true }).populate(
+  const param = req.params.slug; // This catches whatever is at the end of the URL
+  
+  let query = { isActive: true };
+
+  // SMART ROUTING: Check if the frontend sent a MongoDB ObjectId or a text Slug
+  if (mongoose.Types.ObjectId.isValid(param)) {
+    query._id = param; // Search by ID
+  } else {
+    query.slug = param; // Search by Slug
+  }
+
+  const product = await Product.findOne(query).populate(
     'category',
     'name slug'
   );
-  if (!product) throw new ApiError(404, 'Product not found');
+
+  if (!product) {
+    throw new ApiError(404, 'Product not found');
+  }
+  
   return sendSuccess(res, 200, { product });
 });
 

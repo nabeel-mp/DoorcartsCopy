@@ -5,7 +5,6 @@ import * as productService from '../api/productService';
 import * as categoryService from '../api/categoryService';
 
 export default function CategoryProducts() {
-  // The 'slug' parameter holds the category._id
   const { slug } = useParams(); 
   const navigate = useNavigate();
   
@@ -18,7 +17,7 @@ export default function CategoryProducts() {
       try {
         setIsLoading(true);
 
-        // 1. Fetch Category Name for the Header
+        // 1. Fetch Category Name for Header
         const catRes = await categoryService.getCategories();
         const categories = catRes?.data?.data || catRes?.data || catRes || [];
         const currentCat = categories.find(c => c._id === slug || c.slug === slug);
@@ -28,19 +27,32 @@ export default function CategoryProducts() {
           setCategoryName('Products');
         }
 
-        // 2. Fetch Products OPTIMIZED: Let the backend filter by category directly
-        // productService.getProducts() returns an object: { products: [...], total, page }
+        // 2. Fetch Products from Service
         const prodRes = await productService.getProducts({ category: slug });
         
-        // 3. Safely extract the products array from the response object
-        let fetchedProducts = [];
-        if (prodRes && Array.isArray(prodRes.products)) {
-          fetchedProducts = prodRes.products; // Standard response
-        } else if (Array.isArray(prodRes)) {
-          fetchedProducts = prodRes; // Fallback if API changes
+        // 3. Defensive extraction matching any wrapped API response structure
+        let allProducts = [];
+        if (Array.isArray(prodRes)) {
+          allProducts = prodRes;
+        } else if (prodRes && Array.isArray(prodRes.products)) {
+          allProducts = prodRes.products;
+        } else if (prodRes && prodRes.data) {
+          if (Array.isArray(prodRes.data)) {
+            allProducts = prodRes.data;
+          } else if (Array.isArray(prodRes.data.products)) {
+            allProducts = prodRes.data.products;
+          } else if (prodRes.data.data && Array.isArray(prodRes.data.data.products)) {
+            allProducts = prodRes.data.data.products;
+          }
         }
 
-        setProducts(fetchedProducts);
+        // 4. Client-side fallback filter to guarantee safety if backend query parsing slips
+        const filteredProducts = allProducts.filter(p => {
+          if (!p.category) return false;
+          return p.category === slug || p.category?._id === slug || p.category?.slug === slug;
+        });
+
+        setProducts(filteredProducts);
       } catch (error) {
         console.error("Error fetching category products:", error);
         setCategoryName('Error loading category');
@@ -76,7 +88,7 @@ export default function CategoryProducts() {
         </button>
       </header>
 
-      {/* Main Content */}
+      {/* Main Product Grid */}
       <main className="p-4 pb-20">
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
@@ -96,7 +108,6 @@ export default function CategoryProducts() {
                 onClick={() => navigate(`/product/${product._id}`)}
                 className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden active:scale-95 transition-transform cursor-pointer flex flex-col"
               >
-                {/* Product Image */}
                 <div className="h-32 bg-gray-50 flex items-center justify-center p-2 relative">
                   <img 
                     src={product.images?.[0] || 'https://via.placeholder.com/150'} 
@@ -110,7 +121,6 @@ export default function CategoryProducts() {
                   )}
                 </div>
                 
-                {/* Product Details */}
                 <div className="p-3 flex flex-col flex-1">
                   <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-tight mb-1">
                     {product.name}
