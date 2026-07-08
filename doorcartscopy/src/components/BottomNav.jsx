@@ -12,17 +12,17 @@ export default function BottomNav({ active = 'services' }) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full max-w-md mx-auto right-0 z-50 bg-white border-t border-gray-100 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] flex justify-around items-center h-20 px-2 pb-safe">
+    <nav className="fixed bottom-0 left-0 w-full max-w-md mx-auto right-0 z-50 bg-surface border-t border-outline-variant/30 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] flex justify-around items-center h-20 px-2 pb-safe">
       {items.map(({ key, label, icon: Icon, path }) => {
         const isActive = active === key;
         return (
           <button
             key={key}
             onClick={() => navigate(path)}
-            className={`flex flex-col items-center justify-center gap-1 px-4 py-1.5 rounded-xl transition-all active:scale-90 duration-200 ${
+            className={`flex flex-col items-center justify-center gap-1 px-4 py-1.5 rounded-full transition-all active:scale-90 duration-200 ${
               isActive
-                ? 'bg-[#e5edfa] text-[#004aad]'
-                : 'text-gray-400 hover:text-[#004aad]'
+                ? 'bg-primary-container text-on-primary-container'
+                : 'text-on-surface-variant hover:text-primary-container'
             }`}
           >
             <Icon size={22} strokeWidth={isActive ? 2.4 : 2} />

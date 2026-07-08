@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Menu, Search, User, History, Wallet, Settings, LogOut, X,
+  Menu, Search, User, History, Wallet, Settings as SettingsIcon, Headphones, LogOut, X,
   Layers, Grid3x3, Zap, HardHat, Box,
 } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
@@ -91,16 +91,17 @@ export default function Home() {
           <nav className="flex-1 overflow-y-auto">
             <ul className="space-y-1">
               {[
-                { label: 'My Account', icon: User, path: '/account' },
+                { label: 'My Profile', icon: User, path: '/account' },
                 { label: 'Order History', icon: History, path: '/order-history' },
                 { label: 'Wallet & Commissions', icon: Wallet, path: '/wallet' },
-                { label: 'Settings', icon: Settings, path: '#' },
+                { label: 'Settings', icon: SettingsIcon, path: '/settings' },
+                { label: 'Support', icon: Headphones, path: '/support' },
               ].map(({ label, icon: Icon, path }) => (
                 <li key={label}>
                   <button
                     onClick={() => { 
                       setDrawerOpen(false); 
-                      if (path !== '#') navigate(path); 
+                      navigate(path); 
                     }}
                     className="w-full flex items-center gap-4 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-[#004aad] mx-2 my-1 rounded-full transition-all"
                   >

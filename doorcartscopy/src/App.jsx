@@ -15,6 +15,7 @@ import Wallet from './Pages/Wallet';
 import Support from './Pages/Support';
 import Account from './Pages/Account';
 import OrderSuccess from './Pages/OrderSuccess';
+import Settings from './Pages/Settings';
 
 const ProtectedRoute = ({ isAuthenticated, children }) => {
   if (!isAuthenticated) {
@@ -52,6 +53,7 @@ function AppRoutes() {
         <Route path="/wallet" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Wallet /></ProtectedRoute>} />
         <Route path="/support" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Support /></ProtectedRoute>} />
         <Route path="/account" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Account /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Settings /></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to={isAuthenticated ? '/home' : '/login'} replace />} />
       </Routes>
