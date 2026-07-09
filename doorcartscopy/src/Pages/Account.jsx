@@ -1,6 +1,5 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Phone, MapPin, Building, Edit3, LogOut } from 'lucide-react';
+import { ArrowLeft, User, Phone, MapPin, Building, Edit3, LogOut, Shield } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/authContext';
 
@@ -91,6 +90,15 @@ export default function Account() {
         </section>
 
         <section className="pt-4">
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => navigate('/admin')}
+              className="w-full mb-3 bg-[#0b2242] text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#14325e] transition-colors"
+            >
+              <Shield size={20} />
+              Open Admin Panel
+            </button>
+          )}
           <button 
             onClick={handleLogout}
             className="w-full bg-red-50 text-red-600 font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-red-100 transition-colors"

@@ -11,6 +11,14 @@ const getCategories = asyncHandler(async (req, res) => {
   return sendSuccess(res, 200, { categories });
 });
 
+// @desc    Admin: list all categories, including inactive ones
+// @route   GET /api/categories/admin/all
+// @access  Private/Admin
+const getAllCategories = asyncHandler(async (req, res) => {
+  const categories = await Category.find().sort({ createdAt: -1 });
+  return sendSuccess(res, 200, { categories });
+});
+
 // @desc    Get single category by slug OR ID
 // @route   GET /api/categories/:slug
 // @access  Public
@@ -67,4 +75,11 @@ const deleteCategory = asyncHandler(async (req, res) => {
   return sendSuccess(res, 200, null, 'Category deleted');
 });
 
-module.exports = { getCategories, getCategoryBySlug, createCategory, updateCategory, deleteCategory };
+module.exports = {
+  getCategories,
+  getAllCategories,
+  getCategoryBySlug,
+  createCategory,
+  updateCategory,
+  deleteCategory
+};

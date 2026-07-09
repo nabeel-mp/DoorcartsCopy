@@ -1,6 +1,7 @@
 const express = require('express');
 const {
   getProducts,
+  getAllProducts,
   getProductBySlug,
   createProduct,
   updateProduct,
@@ -11,6 +12,7 @@ const { protect, adminOnly } = require('../middleware/auth');
 const router = express.Router();
 
 router.get('/', getProducts);
+router.get('/admin/all', protect, adminOnly, getAllProducts);
 router.get('/:slug', getProductBySlug);
 
 router.post('/', protect, adminOnly, createProduct);

@@ -16,6 +16,7 @@ import Support from './Pages/Support';
 import Account from './Pages/Account';
 import OrderSuccess from './Pages/OrderSuccess';
 import Settings from './Pages/Settings';
+import AdminPanel from './Pages/AdminPanel';
 
 const ProtectedRoute = ({ isAuthenticated, children }) => {
   if (!isAuthenticated) {
@@ -24,8 +25,15 @@ const ProtectedRoute = ({ isAuthenticated, children }) => {
   return children;
 };
 
+const AdminRoute = ({ user, children }) => {
+  if (user?.role !== 'admin') {
+    return <Navigate to="/home" replace />;
+  }
+  return children;
+};
+
 function AppRoutes() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -54,6 +62,7 @@ function AppRoutes() {
         <Route path="/support" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Support /></ProtectedRoute>} />
         <Route path="/account" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Account /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute isAuthenticated={isAuthenticated}><Settings /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute isAuthenticated={isAuthenticated}><AdminRoute user={user}><AdminPanel /></AdminRoute></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to={isAuthenticated ? '/home' : '/login'} replace />} />
       </Routes>

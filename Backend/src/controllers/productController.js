@@ -66,6 +66,42 @@ const getProducts = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Admin: list all products, including inactive ones
+// @route   GET /api/products/admin/all
+// @access  Private/Admin
+const getAllProducts = asyncHandler(async (req, res) => {
+  const { keyword, category, sort = '-createdAt', page = 1, limit = 100 } = req.query;
+
+  const query = {};
+
+  if (keyword) {
+    query.$text = { $search: keyword };
+  }
+
+  if (category) {
+    query.category = category;
+  }
+
+  const pageNum = Number(page);
+  const limitNum = Number(limit);
+
+  const [products, total] = await Promise.all([
+    Product.find(query)
+      .populate('category', 'name slug')
+      .sort(sort)
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum),
+    Product.countDocuments(query)
+  ]);
+
+  return sendSuccess(res, 200, {
+    products,
+    total,
+    page: pageNum,
+    pages: Math.ceil(total / limitNum)
+  });
+});
+
 // @desc    Get single product by slug
 // @route   GET /api/products/:slug
 // @access  Public
@@ -127,4 +163,11 @@ const deleteProduct = asyncHandler(async (req, res) => {
   return sendSuccess(res, 200, null, 'Product deleted');
 });
 
-module.exports = { getProducts, getProductBySlug, createProduct, updateProduct, deleteProduct };
+module.exports = {
+  getProducts,
+  getAllProducts,
+  getProductBySlug,
+  createProduct,
+  updateProduct,
+  deleteProduct
+};

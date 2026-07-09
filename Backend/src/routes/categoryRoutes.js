@@ -1,6 +1,7 @@
 const express = require('express');
 const {
   getCategories,
+  getAllCategories,
   getCategoryBySlug,
   createCategory,
   updateCategory,
@@ -11,6 +12,7 @@ const { protect, adminOnly } = require('../middleware/auth');
 const router = express.Router();
 
 router.get('/', getCategories);
+router.get('/admin/all', protect, adminOnly, getAllCategories);
 router.get('/:slug', getCategoryBySlug);
 
 router.post('/', protect, adminOnly, createCategory);

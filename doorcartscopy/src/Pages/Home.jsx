@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Menu, Search, User, History, Wallet, Settings as SettingsIcon, Headphones, LogOut, X,
-  Layers, Grid3x3, Zap, HardHat, Box,
+  Layers, Grid3x3, Zap, HardHat, Box, Shield,
 } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 import { useAuth } from '../context/authContext';
@@ -96,6 +96,7 @@ export default function Home() {
                 { label: 'Wallet & Commissions', icon: Wallet, path: '/wallet' },
                 { label: 'Settings', icon: SettingsIcon, path: '/settings' },
                 { label: 'Support', icon: Headphones, path: '/support' },
+                ...(user?.role === 'admin' ? [{ label: 'Admin Panel', icon: Shield, path: '/admin' }] : []),
               ].map(({ label, icon: Icon, path }) => (
                 <li key={label}>
                   <button
